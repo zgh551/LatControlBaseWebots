@@ -1,0 +1,135 @@
+#VRML_SIM R2020a utf8
+WorldInfo {
+  title "lateral Control"
+  ERP 0.6
+  basicTimeStep 10
+  contactProperties [
+    ContactProperties {
+      coulombFriction [
+        8
+      ]
+      softCFM 1e-05
+    }
+  ]
+}
+Viewpoint {
+  fieldOfView 0.785408
+  orientation 0.011882413297730212 0.9566187640258235 0.29110023800733636 3.2196493916299267
+  position -5.844822222113876 43.88040208475538 -69.5504230801873
+  near 1
+  follow "vehicle"
+  followSmoothness 0
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Fog {
+  color 0.38 0.35 0.32
+  visibilityRange 1000
+}
+DEF GROUND Solid {
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.8 0.8 0.8
+        baseColorMap ImageTexture {
+          url [
+            "textures/ground.jpg"
+          ]
+        }
+        roughness 0.5
+        metalness 0
+        textureTransform TextureTransform {
+          scale 500 500
+        }
+      }
+      geometry DEF GROUND_PLANE Plane {
+        size 2000 2000
+      }
+    }
+  ]
+  name "Ground solid"
+  boundingObject USE GROUND_PLANE
+  locked TRUE
+}
+RoadIntersection {
+  translation 0 0.02 -15
+  rotation 0 1 0 -0.7853996938995746
+  id "3"
+  connectedRoadIDs [
+    "0"
+  ]
+  roadsWidth 20
+}
+BmwX5 {
+  translation -2 0.5 -18
+  rotation -0.20125532215286748 0.97953446152439 0.002921299585588216 0
+  color 0 0.333333 0.498039
+  controller "rear_feedback_controller"
+}
+StraightRoadSegment {
+  translation 0 0.01 0
+  name "road_straight"
+  id "0"
+  startJunction "3"
+  endJunction "2"
+  width 20
+  numberOfLanes 4
+  numberOfForwardLanes 2
+  lines [
+    RoadLine {
+    }
+    RoadLine {
+      color 1 1 0
+      type "double"
+    }
+  ]
+  roadBorderHeight 0.1
+  rightBarrier TRUE
+  leftBarrier TRUE
+  length 30
+}
+StraightRoadSegment {
+  translation -23 0.02 53
+  rotation 0 1 0 4.712389693899574
+  name "road_straight(1)"
+  id "1"
+  startJunction "2"
+  width 20
+  numberOfLanes 4
+  numberOfForwardLanes 2
+  lines [
+    RoadLine {
+    }
+    RoadLine {
+      color 1 1 0
+      type "double"
+    }
+  ]
+  roadBorderHeight 0.1
+  rightBarrier TRUE
+  leftBarrier TRUE
+  length 60
+}
+CurvedRoadSegment {
+  translation -23 0.02 30
+  name "road2"
+  id "2"
+  startJunction "0"
+  endJunction "1"
+  width 20
+  numberOfLanes 4
+  numberOfForwardLanes 2
+  lines [
+    RoadLine {
+    }
+    RoadLine {
+      color 1 1 0
+      type "double"
+    }
+  ]
+  rightBarrier TRUE
+  leftBarrier TRUE
+  curvatureRadius 23
+}
