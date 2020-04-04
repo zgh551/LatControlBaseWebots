@@ -1,0 +1,3 @@
+.vscode
+controllers/*/build/
+controllers/*/*.exe
