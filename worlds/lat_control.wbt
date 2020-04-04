@@ -2,10 +2,44 @@
 WorldInfo {
   title "lateral Control"
   ERP 0.6
-  basicTimeStep 10
-  inkEvaporation 0.1
+  basicTimeStep 20
   contactProperties [
     ContactProperties {
+      coulombFriction [
+        8
+      ]
+      softCFM 1e-05
+    }
+    ContactProperties {
+      material2 "TruckWheels"
+      coulombFriction [
+        8
+      ]
+      softCFM 1e-05
+    }
+    ContactProperties {
+      material2 "RangeRoverSportSVRWheels"
+      coulombFriction [
+        8
+      ]
+      softCFM 1e-05
+    }
+    ContactProperties {
+      material2 "LincolnMKZWheels"
+      coulombFriction [
+        8
+      ]
+      softCFM 1e-05
+    }
+    ContactProperties {
+      material2 "ToyotaPriusWheels"
+      coulombFriction [
+        8
+      ]
+      softCFM 1e-05
+    }
+    ContactProperties {
+      material2 "CitroenCZeroWheels"
       coulombFriction [
         8
       ]
@@ -15,8 +49,8 @@ WorldInfo {
 }
 Viewpoint {
   fieldOfView 0.785408
-  orientation 0.20821834034218842 0.9435164706599493 0.25772425640311364 4.444217838998861
-  position 164.5880281043615 5.010596329186908 -24.452065291815696
+  orientation 1 0 0 4.71238898038469
+  position -1.852013527507889e-15 56.16237592488638 -1.0125712326178313e-14
   near 1
   follow "vehicle"
   followSmoothness 0
@@ -29,68 +63,9 @@ Fog {
   color 0.38 0.35 0.32
   visibilityRange 1000
 }
-DEF GROUND Solid {
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.8 0.8 0.8
-        baseColorMap ImageTexture {
-          url [
-            "textures/ground.jpg"
-          ]
-        }
-        roughness 0.5
-        metalness 0
-        textureTransform TextureTransform {
-          scale 500 500
-        }
-      }
-      geometry DEF GROUND_PLANE Plane {
-        size 2000 2000
-      }
-    }
-  ]
-  name "Ground solid"
-  boundingObject USE GROUND_PLANE
-  locked TRUE
-}
-RoadIntersection {
-  translation 0 0.02 -15
-  rotation 0 1 0 -0.7853996938995746
-  id "3"
-  connectedRoadIDs [
-    "0"
-  ]
-  roadsWidth 20
-}
-BmwX5 {
-  hidden position_0_0 2.3186311285567853e-07
-  hidden position2_0_0 460.13687175655156
-  hidden position_0_1 -2.3186295525560682e-07
-  hidden position2_0_1 460.13691854244576
-  hidden position_0_2 461.64794571548083
-  hidden position_0_3 461.67052443068127
-  hidden position_0_4 4.85722573273506e-17
-  hidden position_0_5 4.85722573273506e-17
-  hidden position_0_9 0.40180207372581017
-  hidden linearVelocity_0 5.554936578852677 9.906336839403048e-07 -0.00023633561891096814
-  hidden angularVelocity_0 -3.302821574136885e-11 -1.6832243319021253e-13 -7.775777417113543e-07
-  hidden rotation_1 -1.2897951648402176e-07 -0.9999999999999849 -1.1593155642783805e-07 4.818840974737828
-  hidden linearVelocity_1 5.554936521714677 -7.980147314986695e-09 -0.0002363356168910778
-  hidden angularVelocity_1 -0.0006282706984279615 -5.425077688525149e-05 -14.853833262084349
-  hidden rotation_2 -1.289733602018834e-07 0.9999999999999849 1.1593147762780219e-07 4.818794188843629
-  hidden linearVelocity_2 5.554936521715069 -7.9801462516725e-09 -0.00023633561543952755
-  hidden angularVelocity_2 -0.0006356464759785472 5.4250776393967106e-05 -14.853833261770783
-  hidden rotation_3 0 -1 0 3.3077670158085692
-  hidden linearVelocity_3 5.554936542501151 4.8817916116770394e-08 -0.0002363356136285942
-  hidden angularVelocity_3 -0.0006315022470910841 -5.4064637995167434e-05 -14.851709726643517
-  hidden rotation_4 0 0.9999999999999999 0 3.2851883006081306
-  hidden linearVelocity_4 5.554936542502162 4.881791406655945e-08 -0.00023633562138868327
-  hidden angularVelocity_4 -0.0006322342375506319 5.4064637543058e-05 -14.85170972661508
-  hidden translation_24 0.816209092001337 -0.03205201903350918 -0.02855543513893899
-  hidden rotation_24 0 -0.665206042148501 0.7466598432279095 0.40180207372580984
-  translation 172.45244243387705 0.31692149564896344 -23.00803301113858
-  rotation -0.0022468471720351567 0.9999949514502506 0.0022469427665178046 1.5708439205089924
+DEF BMW BmwX5 {
+  translation 0 0.440622 10
+  rotation 0 1 0 1.5708
   color 0 0.333333 0.498039
   controller "rear_feedback_controller"
   supervisor TRUE
@@ -127,33 +102,28 @@ BmwX5 {
     GPS {
     }
     Pen {
+      children [
+        Transform {
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0 0 1
+                roughness 0.5
+                metalness 0
+              }
+              geometry Cylinder {
+                height 0.14
+                radius 0.05
+              }
+            }
+          ]
+        }
+      ]
       inkColor 0 0 1
-      inkDensity 0.09803921568627451
-      leadSize 0.2
+      inkDensity 1
+      leadSize 0.1
     }
   ]
-}
-StraightRoadSegment {
-  translation 0 0.01 0
-  name "road_straight"
-  id "0"
-  startJunction "3"
-  endJunction "2"
-  width 20
-  numberOfLanes 4
-  numberOfForwardLanes 2
-  lines [
-    RoadLine {
-    }
-    RoadLine {
-      color 1 1 0
-      type "double"
-    }
-  ]
-  roadBorderHeight 0.1
-  rightBarrier TRUE
-  leftBarrier TRUE
-  length 30
 }
 StraightRoadSegment {
   translation -30 0.02 60
@@ -197,4 +167,34 @@ CurvedRoadSegment {
   rightBarrier TRUE
   leftBarrier TRUE
   curvatureRadius 30
+}
+Robot {
+  children [
+    DEF Ground Display {
+      children [
+        DEF G_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "textures/grid.png"
+              ]
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Plane {
+            size 50 50
+          }
+        }
+      ]
+      name "ground_display"
+      width 1024
+      height 1024
+    }
+  ]
+  name "ground_robot"
+  boundingObject USE G_SHAPE
+  locked TRUE
+  controller "supervisor_controller"
+  supervisor TRUE
 }

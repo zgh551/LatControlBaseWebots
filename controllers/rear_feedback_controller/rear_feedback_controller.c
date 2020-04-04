@@ -31,7 +31,7 @@
 // to be used as array indices
 enum { X, Y, Z };
 
-#define TIME_STEP 50
+#define TIME_STEP 20
 #define UNKNOWN 99999.99
 
 #define TIME_STEP 50
@@ -39,6 +39,22 @@ enum { X, Y, Z };
 #define LABEL_X 0.05
 #define LABEL_Y 0.95
 #define GREEN 0x008800
+
+#define SAMPLE_STEP ( 0.01 )
+#define M_PI        ( 3.1415926535897932384626433832795 )
+#define RADIUS      ( 10.0 )
+
+typedef struct _TargetTrack
+{
+    double x;
+    double y;
+    double yaw;
+    double curvature;
+    double velocity;
+}TargetTrack;
+
+TargetTrack TargetCurvature[(unsigned int)(M_PI/SAMPLE_STEP)+1];
+
 
 // enabe various 'features'
 bool enable_collision_avoidance = false;
@@ -109,9 +125,47 @@ void compute_gps_speed() {
  * "controllerArgs" field of the Robot node
  */
 int main(int argc, char **argv) {
+	unsigned int i,max_cnt;
+  	double index = 0;
+	double first_derivative_x,first_derivative_y;
+    double second_derivative_x,second_derivative_y;
 	/* necessary to initialize webots stuff */
 	wbu_driver_init();
-
+	max_cnt = (unsigned int)(M_PI/SAMPLE_STEP)+1;
+	index = 0;
+	for(i=0;i<max_cnt;i++)
+	{
+		TargetCurvature[i].x = RADIUS * cos(index);
+		TargetCurvature[i].y = RADIUS * sin(index);
+		index = index +  SAMPLE_STEP;                                     
+	}
+	for(i=0;i<max_cnt;i++)
+	{
+		if(i == 0)
+		{
+			first_derivative_x = TargetCurvature[2].x - TargetCurvature[1].x;
+        	first_derivative_y = TargetCurvature[2].y - TargetCurvature[1].y;
+        	second_derivative_x = TargetCurvature[2].x + TargetCurvature[0].x - 2 * TargetCurvature[1].x;
+        	second_derivative_y = TargetCurvature[2].y + TargetCurvature[0].y - 2 * TargetCurvature[1].y;
+		}
+		else if(i == (max_cnt - 1))
+		{
+			first_derivative_x = TargetCurvature[max_cnt-1].x - TargetCurvature[max_cnt-2].x;
+        	first_derivative_y = TargetCurvature[max_cnt-1].y - TargetCurvature[max_cnt-2].y;
+        	second_derivative_x = TargetCurvature[max_cnt-1].x + TargetCurvature[max_cnt-3].x - 2 * TargetCurvature[max_cnt-2].x;
+        	second_derivative_y = TargetCurvature[max_cnt-1].y + TargetCurvature[max_cnt-3].y - 2 * TargetCurvature[max_cnt-2].y;
+		}
+		else
+		{
+			first_derivative_x = TargetCurvature[i+1].x - TargetCurvature[i].x;
+        	first_derivative_y = TargetCurvature[i+1].y - TargetCurvature[i].y;
+        	second_derivative_x = TargetCurvature[i+1].x + TargetCurvature[i-1].x - 2 * TargetCurvature[i].x;
+        	second_derivative_y = TargetCurvature[i+1].y + TargetCurvature[i-1].y - 2 * TargetCurvature[i].y;
+		}
+		TargetCurvature[i].yaw = atan2(first_derivative_y,first_derivative_x);
+		TargetCurvature[i].curvature = (second_derivative_y*first_derivative_x - second_derivative_x*first_derivative_y)
+                                           / pow(pow(first_derivative_x,2)+pow(first_derivative_y,2),1.5);
+	}
 	/*
 	 * You should declare here WbDeviceTag variables for storing
 	 * robot devices like this:
@@ -130,17 +184,17 @@ int main(int argc, char **argv) {
 		else if (strcmp(name, "display") == 0)
 		{
 			enable_display = true;
-			printf("display enable!");
+			printf("display enable!\r\n");
 		}
 		else if (strcmp(name, "gps") == 0)
 		{
 			has_gps = true;
-			printf("gps enable!");
+			printf("gps enable!\r\n");
 		}
 		else if (strcmp(name, "camera") == 0)
 		{
 			has_camera = true;
-			printf("camera enable!");
+			printf("camera enable!\r\n");
 		}
 		else if(strcmp(name, "pen") == 0)
 		{
@@ -171,7 +225,7 @@ int main(int argc, char **argv) {
 		green = 0;
 		blue = 0xff;
 		color = (((red << 8) | green) << 8) | blue;
-		wb_pen_set_ink_color(pen,color,0.9);
+		wb_pen_set_ink_color(pen,color,1.0);
 	}
 
 	// initialize display (speedometer)
@@ -180,7 +234,7 @@ int main(int argc, char **argv) {
 		speedometer_image = wb_display_image_load(display, "speedometer.png");
 	}
   
-	wbu_driver_set_cruising_speed(20);
+	wbu_driver_set_cruising_speed(1);
 	wbu_driver_set_hazard_flashers(true);
 	wbu_driver_set_dipped_beams(true);
 	wbu_driver_set_antifog_lights(true);
