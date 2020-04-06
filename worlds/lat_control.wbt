@@ -50,7 +50,7 @@ WorldInfo {
 Viewpoint {
   fieldOfView 0.785408
   orientation 1 0 0 4.71238898038469
-  position -1.852013527507889e-15 56.16237592488638 -1.0125712326178313e-14
+  position 1.078565782668422e-15 54.18197112040152 -8.376847117055226e-15
   near 1
   follow "vehicle"
   followSmoothness 0
@@ -64,7 +64,7 @@ Fog {
   visibilityRange 1000
 }
 DEF BMW BmwX5 {
-  translation 0 0.440622 10
+  translation 0 0.440622 8
   rotation 0 1 0 1.5708
   color 0 0.333333 0.498039
   controller "rear_feedback_controller"
@@ -102,6 +102,7 @@ DEF BMW BmwX5 {
     GPS {
     }
     Pen {
+      translation 0 -0.2 0
       children [
         Transform {
           children [
@@ -121,7 +122,7 @@ DEF BMW BmwX5 {
       ]
       inkColor 0 0 1
       inkDensity 1
-      leadSize 0.1
+      leadSize 0.05
     }
   ]
 }
@@ -148,25 +149,22 @@ StraightRoadSegment {
   length 60
 }
 CurvedRoadSegment {
-  translation -30 0.02 30
+  translation 0 0.02 0
   name "road2"
   id "2"
   startJunction "0"
   endJunction "1"
-  width 20
-  numberOfLanes 4
-  numberOfForwardLanes 2
+  width 5
   lines [
     RoadLine {
-    }
-    RoadLine {
       color 1 1 0
-      type "double"
+      type "continuous"
     }
   ]
+  roadBorderHeight 0.35
   rightBarrier TRUE
   leftBarrier TRUE
-  curvatureRadius 30
+  curvatureRadius 8
 }
 Robot {
   children [
@@ -176,14 +174,14 @@ Robot {
           appearance PBRAppearance {
             baseColorMap ImageTexture {
               url [
-                "textures/grid.png"
+                "textures/asphalt.jpg"
               ]
             }
             roughness 1
             metalness 0
           }
           geometry Plane {
-            size 50 50
+            size 30 30
           }
         }
       ]
@@ -195,6 +193,41 @@ Robot {
   name "ground_robot"
   boundingObject USE G_SHAPE
   locked TRUE
-  controller "supervisor_controller"
+  supervisor TRUE
+}
+Floor {
+  translation 0 0.01 0
+  size 20 20
+  tileSize 20 20
+}
+DEF TARGET_PEN Robot {
+  children [
+    Pen {
+      translation 0 0.09 0
+      children [
+        Transform {
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.333333 0.666667 0
+                roughness 0.7
+                metalness 0
+              }
+              geometry Cylinder {
+                height 0.1
+                radius 0.05
+              }
+            }
+          ]
+        }
+      ]
+      inkColor 0 1 0
+      inkDensity 1
+      leadSize 0.05
+    }
+  ]
+  name "pen_robot"
+  boundingObject USE G_SHAPE
+  controller "pen_controller"
   supervisor TRUE
 }

@@ -12,5 +12,7 @@ build/release/rear_feedback_controller.o: rear_feedback_controller.c \
  C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/robot.h \
  C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/vehicle/driver.h \
  C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/types.h \
+ C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/vehicle/car.h \
  C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/supervisor.h \
- C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/pen.h
+ C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/pen.h \
+ C:\Users\mshuang.NB_HUANGMAOSHEN\AppData\Local\Programs\Webots/include/controller/c/webots/utils/system.h

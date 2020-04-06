@@ -25,8 +25,8 @@
  */
 #define TIME_STEP 64
 
-#define GROUND_X 50.0
-#define GROUND_Z 50.0
+#define GROUND_X 30.0
+#define GROUND_Z 30.0
 
 #define LIGHT_GRAY 0x505050
 #define RED 0xBB2222
@@ -35,7 +35,7 @@
 
 #define SAMPLE_STEP ( 0.01 )
 #define M_PI        ( 3.1415926535897932384626433832795 )
-#define RADIUS      ( 10.0 )
+#define RADIUS      ( 8.0 )
 
 typedef struct _TargetTrack
 {
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
   WbFieldRef translationField = wb_supervisor_node_get_field(vehicle, "translation");
 
   // paint the display's background
-  wb_display_set_color(ground_display, LIGHT_GRAY);
+  wb_display_set_color(ground_display, 0x010101);
   wb_display_fill_rectangle(ground_display, 0, 0, width, height);
   wb_display_set_color(ground_display, BLUE);
   wb_display_draw_line(ground_display, 0, height / 2, width - 1, height / 2);

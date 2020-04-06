@@ -18,8 +18,10 @@
 #include <webots/lidar.h>
 #include <webots/robot.h>
 #include <webots/vehicle/driver.h>
+#include <webots/vehicle/car.h>
 #include <webots/supervisor.h>
 #include <webots/pen.h>
+#include <webots/utils/system.h>
 
 #include <math.h>
 #include <stdio.h>
@@ -34,15 +36,16 @@ enum { X, Y, Z };
 #define TIME_STEP 20
 #define UNKNOWN 99999.99
 
-#define TIME_STEP 50
-
 #define LABEL_X 0.05
 #define LABEL_Y 0.95
 #define GREEN 0x008800
 
 #define SAMPLE_STEP ( 0.01 )
-#define M_PI        ( 3.1415926535897932384626433832795 )
-#define RADIUS      ( 10.0 )
+//#define M_PI        ( 3.1415926535897932384626433832795 )
+#define RADIUS      ( 8.0 )
+
+#define COEFFICIENT_KPSI	( 1.5f  )   // K_psi
+#define COEFFICIENT_KE		( 1.0f  )   // K_e
 
 typedef struct _TargetTrack
 {
@@ -54,7 +57,7 @@ typedef struct _TargetTrack
 }TargetTrack;
 
 TargetTrack TargetCurvature[(unsigned int)(M_PI/SAMPLE_STEP)+1];
-
+unsigned int max_cnt;
 
 // enabe various 'features'
 bool enable_collision_avoidance = false;
@@ -83,6 +86,10 @@ WbDeviceTag display;
 int display_width = 0;
 int display_height = 0;
 WbImageRef speedometer_image = NULL;
+
+// car
+double wheel_base;
+double last_steering_angle = 0.0;
 
 void update_display() {
   const double NEEDLE_LENGTH = 50.0;
@@ -118,19 +125,42 @@ void compute_gps_speed() {
   memcpy(gps_coords, coords, sizeof(gps_coords));
 }
 
+double set_steering_angle(double wheel_angle,double rate)
+{
+	// limit the steering anigle rate
+	if(wheel_angle - last_steering_angle > rate)
+	{
+		wheel_angle = last_steering_angle + rate;
+	}
+	else if(wheel_angle - last_steering_angle < -rate)
+	{
+		wheel_angle = last_steering_angle - rate;
+	}
+	else
+	{
+		wheel_angle = last_steering_angle;
+	}
+	// limit the range of steering angle 
+	return wheel_angle > 0.5 ? 0.5 : wheel_angle < -0.5 ? -0.5 : wheel_angle;
+}
 
-/*
- * This is the main program.
- * The arguments of the main function can be specified by the
- * "controllerArgs" field of the Robot node
- */
-int main(int argc, char **argv) {
-	unsigned int i,max_cnt;
+double NormalizeAngle(double angle)
+{
+	double a = fmod(angle + M_PI,2.0 * M_PI);
+	if(a < 0.0)
+	{
+		a += 2.0 * M_PI;
+	}
+	return a - M_PI;
+}
+
+void GenerateCurvatureSets()
+{
+	unsigned int i;
   	double index = 0;
 	double first_derivative_x,first_derivative_y;
     double second_derivative_x,second_derivative_y;
-	/* necessary to initialize webots stuff */
-	wbu_driver_init();
+
 	max_cnt = (unsigned int)(M_PI/SAMPLE_STEP)+1;
 	index = 0;
 	for(i=0;i<max_cnt;i++)
@@ -166,6 +196,78 @@ int main(int argc, char **argv) {
 		TargetCurvature[i].curvature = (second_derivative_y*first_derivative_x - second_derivative_x*first_derivative_y)
                                            / pow(pow(first_derivative_x,2)+pow(first_derivative_y,2),1.5);
 	}
+}
+
+TargetTrack CalculateNearestPointByPosition(double x, double y)
+{
+	unsigned int i,index;
+	double distance;
+	double min_dis;
+
+	index = 0;
+	min_dis = distance = sqrt(pow(TargetCurvature[index].x - x,2.0) + pow(TargetCurvature[index].y - y,2.0));
+	for(i=0;i<max_cnt;i++)
+	{
+		distance = sqrt(pow(TargetCurvature[i].x - x,2.0) + pow(TargetCurvature[i].y - y,2.0)); 
+		if(distance < min_dis)
+		{
+			min_dis = distance;
+			index = i;
+		}                                     
+	}
+	return TargetCurvature[index];
+}
+
+void RearWheelControl(TargetTrack target,double x,double y,double yaw)
+{
+	double vecter_d_x,vecter_d_y;
+	double vecter_t_x,vecter_t_y;
+	double yaw_err,cro_err;
+	double v_x,k;
+	double psi_omega,delta_ctl;
+
+	vecter_d_x = x - target.x;
+	vecter_d_y = y - target.y;
+	int gear = wbu_driver_get_gear_number();
+	// printf("Gear:%d\r\n",gear);
+
+	vecter_t_x = cos(target.yaw);
+	vecter_t_y = sin(target.yaw);
+
+	yaw_err = NormalizeAngle(yaw - target.yaw);
+
+	v_x = wbu_driver_get_current_speed();
+
+	k = target.curvature;
+
+	cro_err = vecter_t_x * vecter_d_y - vecter_t_y *  vecter_d_x;
+
+	psi_omega = v_x * k * cos(yaw_err)/(1.0 - k * cro_err)
+              - COEFFICIENT_KE   * v_x  * sin(yaw_err) * cro_err / yaw_err
+              - COEFFICIENT_KPSI * fabs(v_x) * yaw_err;
+
+	if(fabs(psi_omega) < 1.0e-6f || fabs(yaw_err) < 1.0e-6f)
+	{
+		wbu_driver_set_steering_angle(set_steering_angle(0.0,0.5));
+	}
+	else
+	{
+        delta_ctl = atan(psi_omega * wheel_base / v_x);
+        delta_ctl = delta_ctl > 0.54 ? 0.54 : delta_ctl < -0.54 ? -0.54:delta_ctl;
+		wbu_driver_set_steering_angle(-set_steering_angle(delta_ctl,0.5));
+	}
+}
+/*
+ * This is the main program.
+ * The arguments of the main function can be specified by the
+ * "controllerArgs" field of the Robot node
+ */
+int main(int argc, char **argv) {
+
+	TargetTrack target_curvature;
+	/* necessary to initialize webots stuff */
+	wbu_driver_init();
+	
 	/*
 	 * You should declare here WbDeviceTag variables for storing
 	 * robot devices like this:
@@ -202,6 +304,12 @@ int main(int argc, char **argv) {
 		}
 	}
   
+    // 获取vehicle.translation 属性
+	WbNodeRef vehicle = wb_supervisor_node_get_from_def("BMW");
+	WbFieldRef translationField = wb_supervisor_node_get_field(vehicle, "translation");
+	WbFieldRef rotationField    = wb_supervisor_node_get_field(vehicle, "rotation");
+
+	wheel_base = wbu_car_get_wheelbase();
 	// camera device
 	if (has_camera) {
 		camera = wb_robot_get_device("camera");
@@ -234,10 +342,12 @@ int main(int argc, char **argv) {
 		speedometer_image = wb_display_image_load(display, "speedometer.png");
 	}
   
-	wbu_driver_set_cruising_speed(1);
-	wbu_driver_set_hazard_flashers(true);
-	wbu_driver_set_dipped_beams(true);
-	wbu_driver_set_antifog_lights(true);
+	GenerateCurvatureSets();
+
+	wbu_driver_set_cruising_speed(36);
+	wbu_driver_set_hazard_flashers(false);
+	wbu_driver_set_dipped_beams(false);
+	wbu_driver_set_antifog_lights(false);
 	wbu_driver_set_wiper_mode(SLOW);
 	wbu_driver_set_brake_intensity(0.0);
 	/* main loop
@@ -258,8 +368,16 @@ int main(int argc, char **argv) {
 		if (has_camera){
 			camera_image = wb_camera_get_image(camera);
 		}
-		/* Process sensor data here */
 
+		const double *translation = wb_supervisor_field_get_sf_vec3f(translationField);
+		const double *rotation = wb_supervisor_field_get_sf_rotation(rotationField);
+		
+		printf("x:%f,y:%f,yaw:%f\r\n",translation[2],translation[0],rotation[3]);
+		/* Process sensor data here */
+		target_curvature = CalculateNearestPointByPosition(translation[2],translation[0]);
+		printf("target x:%f,y:%f,yaw:%f\r\n",target_curvature.x,target_curvature.y,target_curvature.yaw);
+		// wbu_driver_set_steering_angle(-0.5);
+                      RearWheelControl(target_curvature,translation[2],translation[0],rotation[3]);
 		// update stuff
 		if (has_gps) { compute_gps_speed();}
 		if (enable_display) { update_display(); }
